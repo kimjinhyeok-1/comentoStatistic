@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.demo.comentoStatistic.dao.StatisticMapper">
+
+    <select id="selectYearLogin" parameterType="string" resultType="YearCountDto">
+        select concat('20', #{year}) as year, count(*) as totCnt
+        from statistic.request_info ri
+        where left(ri.create_date, 2) = #{year};
+    </select>
+
+
+    <select id="selectYearMonthLogin" parameterType="string" resultType="YearMonthCountDto">
+        select concat('20', #{yearMonth}) as yearMonth, count(*) as totCnt
+        from statistic.request_info ri
+        where left(ri.create_date, 4) = #{yearMonth};
+    </select>
+
+    <select id="selectMonthlyUsers" resultType="YearMonthCountDto">
+        select
+        concat('20', left(ri.create_date, 4)) as yearMonth,
+        count(distinct ri.user_id) as totCnt
+        from statistic.request_info ri
+        group by left(ri.create_date, 4)
+        order by left(ri.create_date, 4)
+    </select>
+
+    <select id="selectDailyUsers" resultType="DailyCountDto">
+        select
+        concat('20', left(ri.create_date, 6)) as ymd,
+        count(distinct ri.user_id) as totCnt
+        from statistic.request_info ri
+        group by left(ri.create_date, 6)
+        order by left(ri.create_date, 6)
+    </select>
+
+    <select id="selectAvgDailyLogins" resultType="AvgDailyLoginDto">
+        select avg(daily_cnt) as avgDailyLogins
+        from (
+        select count(*) as daily_cnt
+        from statistic.request_info ri
+        group by left(ri.create_date, 6)
+        ) t
+    </select>
+
+    <select id="selectDeptMonthlyLogins" resultType="DeptMonthCountDto">
+        SELECT
+        u.dept AS dept,
+        CONCAT('20', LEFT(ri.create_date, 4)) AS yearMonth,
+        COUNT(*) AS totCnt
+        FROM request_info ri
+        JOIN user u ON ri.user_id = u.user_id
+        GROUP BY u.dept, LEFT(ri.create_date, 4)
+        ORDER BY u.dept, LEFT(ri.create_date, 4)
+    </select>
+
+    <select id="selectMonthlyUniqueUsersExcludeHoliday" resultType="YearMonthCountDto">
+        SELECT
+        CONCAT('20', LEFT(ri.create_date, 4)) AS yearMonth,
+        COUNT(DISTINCT ri.user_id) AS totCnt
+        FROM request_info ri
+        LEFT JOIN holidaydb.holiday h
+        ON h.yyyymmdd = CONCAT('20', LEFT(ri.create_date, 6))
+        WHERE h.yyyymmdd IS NULL
+        GROUP BY LEFT(ri.create_date, 4)
+        ORDER BY LEFT(ri.create_date, 4)
+    </select>
+
+    <select id="selectDailyUniqueUsersExcludeHoliday" resultType="DayCountDto">
+        SELECT
+        CONCAT('20', LEFT(ri.create_date, 6)) AS yyyymmdd,
+        COUNT(DISTINCT ri.user_id) AS totCnt
+        FROM request_info ri
+        LEFT JOIN holidaydb.holiday h
+        ON h.yyyymmdd = CONCAT('20', LEFT(ri.create_date, 6))
+        WHERE h.yyyymmdd IS NULL
+        GROUP BY LEFT(ri.create_date, 6)
+        ORDER BY LEFT(ri.create_date, 6)
+    </select>
+
+
+
+
+</mapper>
